@@ -1,0 +1,13 @@
+ls
+cd docs
+ls
+tac notes.txt
+cd archive
+ls
+tac old.txt
+cd ../..
+ls
+date
+cd not_a_real_dir
+tac root.txt
+exit

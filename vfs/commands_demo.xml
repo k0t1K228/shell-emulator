@@ -1,0 +1,9 @@
+<vfs>
+    <directory name="docs">
+        <file name="notes.txt">TGluZSBvbmUKTGluZSB0d28KTGluZSB0aHJlZQ==</file>
+        <directory name="archive">
+            <file name="old.txt">QXJjaGl2ZWQgZmlsZSBjb250ZW50</file>
+        </directory>
+    </directory>
+    <file name="root.txt">Um9vdCBsZXZlbCBmaWxl</file>
+</vfs>
