@@ -24,14 +24,14 @@ def parse_command(line):
 def execute(command, args):
     """Выполняет одну команду. Возвращает ложь, если необходимо выйти."""
     if command is None:
-        return True
+        return True, False
     if command == "exit":
-        return False
+        return False, False
     if command == "ls" or command == "cd":
         print(command + ": аргументы:", args)
-        return True
+        return True, False
     print("Ошибка: неизвестная команда:", command)
-    return True
+    return True, True
 
 def parse_args(argv):
     """Разбирает аргументы командной строки: ---vfs и --script."""
