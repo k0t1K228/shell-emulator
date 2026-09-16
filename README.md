@@ -125,12 +125,16 @@ python3 src/main.py --vfs vfs/simple.xml --script scripts/demo.txt
 
 Интерактивный режим:
 
+```
 $./run.sh
 ilya@Ubuntu:~$ ls-la/tmp
 ls:аргуенты:['-la','/tmp']
 ilya@Ubuntu:~$ cd $HOME
 cd:аргументы:['/home/ilya']
 ilya@Ubuntu:~$ exit
+```
+
+```
 Запуск со стартовым скриптом и VFS:
 $./scripts/run_vfs_simple.sh
 Отладочная информация:
@@ -144,3 +148,4 @@ cd:аргументы:['/home/ilya']
 ilya@Ubuntu:~$ неизвестная_команда
 Ошибка:неизвестная команда:неизвестная_команда
 Выполнение скрипта остановлено из-за ошибки.
+```
