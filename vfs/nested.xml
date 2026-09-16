@@ -1,0 +1,9 @@
+<vfs>
+	<directory name ="home">
+		<directory name="user">
+			<directory name="docs">
+				<file name="deep.txt">SGVsbG8sIFZGUye=</file>
+			</directory>
+		</directory>
+	</directory>
+</vfs>
