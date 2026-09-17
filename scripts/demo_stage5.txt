@@ -1,0 +1,7 @@
+ls -l
+chmod 700 docs
+ls -l
+rmdir tmp
+ls
+rmdir docs
+exit

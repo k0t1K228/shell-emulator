@@ -6,4 +6,6 @@
         </directory>
     </directory>
     <file name="root.txt">Um9vdCBsZXZlbCBmaWxl</file>
+    <directory name="tmp">
+    </directory>
 </vfs>

@@ -1,4 +1,4 @@
-"""Эмулятор командный строки с конфигурацией и VFS, 4 этап."""
+"""Эмулятор командный строки с конфигурацией и VFS, 5 этап."""
 
 import getpass
 import os
@@ -40,6 +40,10 @@ def execute(command, args, vfs_root, cwd):
         return True, command_date()
     if command == "tac":
         return True, command_tac(vfs_root, cwd, args)
+    if command == "chmod":
+        return True, command_chmod(vfs_root, cwd, args)
+    if command == "rmdir":
+        return True, command_rmdir(vfs_root, cwd, args)
     print("Ошибка: неизвестная команда:", command)
     return True, True
 
@@ -114,11 +118,11 @@ def build_node(element):
         for child_element in element:
             child_node = build_node(child_element)
             children[child_node["name"]] = child_node
-        return {"type": "dir", "name": name, "children": children}
+        return {"type": "dir", "name": name, "children": children, "mode": "755"}
     if element.tag == "file":
         text = element.text or ""
         content = base64.b64decode(text.strip())
-        return {"type": "file", "name": name, "content": content}
+        return {"type": "file", "name": name, "content": content, "mode": "644"}
     raise ValueError("Неизвестный тег в VFS: " + element.tag)
 
 def load_vfs(path):
@@ -131,7 +135,7 @@ def load_vfs(path):
     for child_element in root_element:
         child_node = build_node(child_element)
         children[child_node["name"]] = child_node
-    return {"type": "dir", "name": "/", "children": children}
+    return {"type": "dir", "name": "/", "children": children, "mode": "755"}
 
 def count_files(node):
     """Считает количество файлов в дереве VFS."""
@@ -160,24 +164,33 @@ def load_vfs_or_report_error(vfs_path):
     return vfs_root
 
 def command_ls(vfs_root, cwd, args):
-    """Выводит содержимое директории VFS."""
+    """Выводит содержимое директории VFS. Флаг -1 показывает режим доступа."""
     if vfs_root is None:
         print("ls: VFS не подключена")
         return True
 
-    path = args[0] if len(args) > 0 else None
+    long_format = "-l" in args
+    path_args = [a for a in args if a != "-l"]
+    path = path_args[0] if len(path_args) > 0 else None
     segments = normalize_path(cwd, path)
     node = get_node(vfs_root, segments)
     if node is None:
         print("ls: путь не найден:", format_path(segments))
         return True
     if node["type"] == "file":
-        print(node["name"])
+        if long_format:
+            print(node["mode"], node["name"])
+        else:
+            print(node["name"])
         return False
+        
     for name in sorted(node["children"].keys()):
         child = node["children"][name]
         suffix = "/" if child["type"] == "dir" else ""
-        print(name + suffix)
+        if long_format:
+            print(child["mode"], name + suffix)
+        else:
+            print(name + suffix)
     return False
 
 def command_cd(vfs_root, cwd, args):
@@ -264,6 +277,86 @@ def run_script(script_path, vfs_root, cwd):
                 return
             if not should_continue:
                 return
+
+def is_valid_mode(mode):
+    """Проверяет, что режим доступа это три восмеричные цифры."""
+    if len(mode) != 3:
+        return False
+    for digit in mode:
+        if digit not in "01234567":
+            return False
+    return True
+
+def command_chmod(vfs_root, cwd, args):
+    """Изменяет режим доступа узла VFS (только в памяти)."""
+    if vfs_root is None:
+        print("chmod: VFS не подключена")
+        return True
+
+    if len(args) < 2:
+        print("chmod: нужно указать режим и путь, например: chmod 755 docs")
+        return True
+
+    mode = args[0]
+    path = args[1]
+
+    if not is_valid_mode(mode):
+        print("chmod: неверный формат режима:", mode)
+        return True
+
+    segments = normalize_path(cwd, path)
+    node = get_node(vfs_root, segments)
+
+    if node is None:
+        print("chmod: путь не найден:", format_path(segments))
+        return True
+
+    node["mode"] = mode
+    print("chmod: режим", format_path(segments), "изменён на", mode)
+    return False
+
+def command_rmdir(vfs_root, cwd, args):
+    """Удаляет пустую директорию из VFS (только в памяти)."""
+    if vfs_root is None:
+        print("rmdir: VFS не подключена")
+        return True
+
+    if len(args) == 0:
+        print("rmdir: не указана директория")
+        return True
+
+    path = args[0]
+    segments = normalize_path(cwd, path)
+    if len(segments) == 0:
+        print("rmdir: нельзя удалить корневую директорию")
+        return True
+        
+    parent_segments = segments[:-1]
+    target_name = segments[-1]
+    parent_node = get_node(vfs_root, parent_segments)
+    
+    if parent_node is None or parent_node["type"] != "dir":
+        print("rmdir: путь не найден:", format_path(segments))
+        return True
+    
+    if target_name not in parent_node["children"]:
+        print("rmdir: путь не найден:", format_path(segments))
+        return True
+    
+    target_node = parent_node["children"][target_name]
+    
+    if target_node["type"] != "dir":
+        print("rmdir: не является директорией:", format_path(segments))
+        return True
+    
+    if len(target_node["children"]) > 0:
+        print("rmdir: директория не пуста:", format_path(segments))
+        return True
+    
+    del parent_node["children"][target_name]
+    print("rmdir: директория удалена:", format_path(segments))
+    return False
+    
 def main():
     """Основной цикл. Разбирает аргументы, загружает VFS, выводит отладочную информацию
     и запускает либо стартовый скрипт, либо REPL."""
