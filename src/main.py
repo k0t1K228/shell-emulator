@@ -305,6 +305,21 @@ def command_chmod(vfs_root, cwd, args):
     print("chmod: режим", format_path(segments), "изменён на", mode)
     return False
 
+def resolve_rmdir_target(vfs_root, parent_segments, target_name):
+    """Находит родительский узел для удаляемой директории rmdir.
+
+    Возвращает (parent_node, error) - error равен None, если всё ок.
+    """
+    parent_node = get_node(vfs_root, parent_segments)
+
+    if parent_node is None or parent_node["type"] != "dir":
+        return None, "путь не найден"
+
+    if target_name not in parent_node["children"]:
+        return None, "путь не найден"
+
+    return parent_node, None
+
 def command_rmdir(vfs_root, cwd, args):
     """Удаляет пустую директорию из VFS (только в памяти)."""
     if vfs_root is None:
@@ -324,14 +339,12 @@ def command_rmdir(vfs_root, cwd, args):
 
     parent_segments = segments[:-1]
     target_name = segments[-1]
-    parent_node = get_node(vfs_root, parent_segments)
+    parent_node, error = resolve_rmdir_target(
+        vfs_root, parent_segments, target_name
+    )
 
-    if parent_node is None or parent_node["type"] != "dir":
-        print("rmdir: путь не найден:", format_path(segments))
-        return True
-
-    if target_name not in parent_node["children"]:
-        print("rmdir: путь не найден:", format_path(segments))
+    if error is not None:
+        print("rmdir:", error + ":", format_path(segments))
         return True
 
     target_node = parent_node["children"][target_name]
